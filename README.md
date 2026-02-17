@@ -1,59 +1,190 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# PBXCF Backend — Portal Crowdfunding (Operational Layer)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Backend REST API untuk platform crowdfunding PBXCF, dibangun dengan Laravel 12.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📌 Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Komponen         | Teknologi                                      |
+| ---------------- | ---------------------------------------------- |
+| Framework        | Laravel 12                                     |
+| PHP              | 8.3                                            |
+| Database         | MySQL                                          |
+| Arsitektur       | REST API (stateless, tanpa session-based auth)  |
+| Authentication   | Laravel Sanctum (token-based / Bearer Token)   |
+| API Docs         | Scramble — OpenAPI (Swagger) auto-generated     |
+| Multi-tenant     | Tenant ID based (via `tenant_id` di setiap tabel) |
+| Prefix Tabel     | `pbxcf_`                                       |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🚀 Cara Setup Project (Pertama Kali)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### 1. Clone & Install Dependencies
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+git clone <repo-url>
+cd pbxcf-backend
+composer install
+```
 
-## Laravel Sponsors
+### 2. Setup Environment
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-### Premium Partners
+Edit file `.env` dan sesuaikan konfigurasi database:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```dotenv
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=pbxcf_db
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
 
-## Contributing
+### 3. Buat Database
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Buat database MySQL dengan nama `pbxcf_db` (atau sesuai `.env`).
 
-## Code of Conduct
+### 4. Jalankan Migration
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+php artisan migrate
+```
 
-## Security Vulnerabilities
+### 5. Jalankan Server
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan serve
+```
 
-## License
+Server berjalan di `http://localhost:8000`.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 📖 Akses API Documentation
+
+Setelah server berjalan, buka di browser:
+
+| Halaman       | URL                                  |
+| ------------- | ------------------------------------ |
+| Swagger UI    | `http://localhost:8000/docs/api`     |
+| OpenAPI JSON  | `http://localhost:8000/docs/api.json`|
+
+Dokumentasi API di-generate otomatis oleh **Scramble** dari route dan controller yang ada.
+
+---
+
+## 🔐 Authentication (Sanctum)
+
+Project ini menggunakan **Laravel Sanctum** dengan mode **token-based** (Bearer Token), **bukan** session/cookie.
+
+### Cara Kerja:
+
+1. User login → server generate **Personal Access Token**
+2. Client menyimpan token tersebut
+3. Setiap request ke endpoint yang protected, kirim header:
+   ```
+   Authorization: Bearer {token}
+   ```
+4. Jika tidak ada token / token invalid → response `401 Unauthenticated`
+
+### Konfigurasi Penting:
+
+| Config                        | Nilai                  | Keterangan                          |
+| ----------------------------- | ---------------------- | ----------------------------------- |
+| Default Auth Guard            | `sanctum`              | `config/auth.php`                   |
+| Sanctum Guard                 | `web` (fallback)       | `config/sanctum.php`                |
+| Token Expiration              | 7 hari (10080 menit)    | Configurable via `.env`             |
+| User Model Trait              | `HasApiTokens`         | `app/Models/User.php`               |
+
+---
+
+## 📁 Struktur Project Saat Ini
+
+```
+pbxcf-backend/
+├── app/
+│   ├── Http/Controllers/        # API Controllers
+│   ├── Models/
+│   │   └── User.php             # User model + HasApiTokens
+│   └── Providers/
+│       └── AppServiceProvider.php  # Scramble security config
+├── bootstrap/
+│   └── app.php                  # API routing + statefulApi middleware
+├── config/
+│   ├── auth.php                 # Guard default: sanctum
+│   ├── sanctum.php              # Sanctum config (token-based)
+│   └── scramble.php             # API docs config
+├── database/migrations/         # Migration files
+├── routes/
+│   ├── api.php                  # API routes (prefix /api)
+│   └── web.php                  # Web routes
+└── .env.example                 # Environment template
+```
+
+---
+
+## 📦 Package yang Diinstall
+
+### Production
+
+| Package              | Versi    | Fungsi                              |
+| -------------------- | -------- | ----------------------------------- |
+| `laravel/framework`  | ^12.0    | Framework utama                     |
+| `laravel/sanctum`    | ^4.3     | API authentication (Bearer Token)   |
+| `dedoc/scramble`     | ^0.13.14 | Auto-generate OpenAPI/Swagger docs  |
+| `laravel/tinker`     | ^2.10    | REPL untuk debugging                |
+
+### Development
+
+| Package                 | Fungsi                    |
+| ----------------------- | ------------------------- |
+| `fakerphp/faker`        | Generate fake data        |
+| `laravel/pint`          | Code style fixer          |
+| `phpunit/phpunit`       | Unit testing              |
+| `mockery/mockery`       | Mocking untuk test        |
+| `nunomaduro/collision`  | Better error reporting    |
+
+---
+
+## Progress Setup
+
+### Hari 1 — Setup Foundation
+
+- Project Laravel 12 berjalan
+- Laravel Sanctum terpasang & dikonfigurasi (token-based, stateless)
+- Scramble (OpenAPI/Swagger) terpasang & bisa diakses di `/docs/api`
+- Migration `personal_access_tokens` berhasil
+
+---
+
+## 🔧 Environment Variables Penting
+
+```dotenv
+# Database
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=pbxcf_db
+DB_USERNAME=root
+DB_PASSWORD=
+
+# Sanctum
+SANCTUM_STATEFUL_DOMAINS=localhost,localhost:3000,127.0.0.1,127.0.0.1:8000
+SANCTUM_TOKEN_EXPIRATION=10080    # Token berlaku 7 hari (dalam menit)
+```
+
+---
+
+## 📝 Catatan
+
+- Semua API endpoint menggunakan prefix `/api`
+- Authentication menggunakan **Bearer Token** (bukan cookie/session)
+- API docs otomatis ter-update setiap ada perubahan route/controller
+- Scramble menampilkan **Authorize** button di Swagger UI untuk input Bearer Token
