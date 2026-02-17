@@ -128,31 +128,6 @@ pbxcf-backend/
 └── .env.example                 # Environment template
 ```
 
----
-
-## 📦 Package yang Diinstall
-
-### Production
-
-| Package              | Versi    | Fungsi                              |
-| -------------------- | -------- | ----------------------------------- |
-| `laravel/framework`  | ^12.0    | Framework utama                     |
-| `laravel/sanctum`    | ^4.3     | API authentication (Bearer Token)   |
-| `dedoc/scramble`     | ^0.13.14 | Auto-generate OpenAPI/Swagger docs  |
-| `laravel/tinker`     | ^2.10    | REPL untuk debugging                |
-
-### Development
-
-| Package                 | Fungsi                    |
-| ----------------------- | ------------------------- |
-| `fakerphp/faker`        | Generate fake data        |
-| `laravel/pint`          | Code style fixer          |
-| `phpunit/phpunit`       | Unit testing              |
-| `mockery/mockery`       | Mocking untuk test        |
-| `nunomaduro/collision`  | Better error reporting    |
-
----
-
 ## Progress Setup
 
 ### Hari 1 — Setup Foundation
