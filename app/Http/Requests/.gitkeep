@@ -1,0 +1,4 @@
+<?php
+
+// App\Http\Requests
+// Form request classes untuk validasi akan ditaruh di sini.

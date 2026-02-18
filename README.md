@@ -110,32 +110,100 @@ Project ini menggunakan **Laravel Sanctum** dengan mode **token-based** (Bearer 
 ```
 pbxcf-backend/
 ├── app/
-│   ├── Http/Controllers/        # API Controllers
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   └── Api/
+│   │   │       └── BaseApiController.php  # Base controller + response helpers
+│   │   ├── Middleware/
+│   │   │   └── EnsureTenant.php           # Multi-tenant middleware (X-Tenant-ID)
+│   │   └── Requests/                      # Form request validations (akan diisi)
 │   ├── Models/
-│   │   └── User.php             # User model + HasApiTokens
+│   │   ├── Traits/
+│   │   │   └── BelongsToTenant.php        # Auto-scope & auto-set tenant_id
+│   │   ├── Campaign.php
+│   │   ├── CampaignUpdate.php
+│   │   ├── Category.php
+│   │   ├── Donation.php
+│   │   ├── Tenant.php
+│   │   ├── User.php                       # + HasApiTokens, BelongsToTenant, roles
+│   │   └── Withdrawal.php
+│   ├── Services/                          # Business logic (akan diisi)
 │   └── Providers/
-│       └── AppServiceProvider.php  # Scramble security config
+│       └── AppServiceProvider.php         # Scramble Bearer Token config
 ├── bootstrap/
-│   └── app.php                  # API routing + statefulApi middleware
+│   └── app.php                            # API routing + tenant middleware alias
 ├── config/
-│   ├── auth.php                 # Guard default: sanctum
-│   ├── sanctum.php              # Sanctum config (token-based)
-│   └── scramble.php             # API docs config
-├── database/migrations/         # Migration files
+│   ├── auth.php                           # Guard default: sanctum
+│   ├── database.php                       # MySQL prefix: pbxcf_
+│   ├── sanctum.php                        # Token-based config
+│   └── scramble.php                       # API docs config
+├── database/migrations/                   # 11 migration files
 ├── routes/
-│   ├── api.php                  # API routes (prefix /api)
-│   └── web.php                  # Web routes
-└── .env.example                 # Environment template
+│   ├── api.php                            # API routes (tenant-scoped group ready)
+│   └── web.php
+└── .env.example
+```
+
+---
+
+## 🗄️ Database Tables (prefix: `pbxcf_`)
+
+| Tabel                          | Keterangan                                  |
+| ------------------------------ | ------------------------------------------- |
+| `pbxcf_tenants`                | Data tenant/organisasi                      |
+| `pbxcf_users`                  | User dengan `tenant_id` & `role`            |
+| `pbxcf_categories`             | Kategori campaign (per tenant)              |
+| `pbxcf_campaigns`              | Campaign crowdfunding                       |
+| `pbxcf_donations`              | Donasi ke campaign                          |
+| `pbxcf_campaign_updates`       | Update/progress dari campaign               |
+| `pbxcf_withdrawals`            | Pencairan dana campaign                     |
+| `pbxcf_personal_access_tokens` | Sanctum API tokens                          |
+| `pbxcf_sessions`               | Session storage                             |
+| `pbxcf_cache` / `cache_locks`  | Cache storage                               |
+| `pbxcf_jobs` / `job_batches` / `failed_jobs` | Queue management         |
+
+---
+
+## 🏢 Multi-Tenant
+
+### Konsep
+
+Setiap data di-scope berdasarkan `tenant_id`. Satu database, banyak tenant (shared database, shared schema).
+
+### Cara Kerja
+
+1. **Header `X-Tenant-ID`** — Client kirim header ini di setiap request ke endpoint tenant-scoped
+2. **Middleware `tenant`** — Validasi tenant exists & aktif, reject jika tidak valid
+3. **Trait `BelongsToTenant`** — Otomatis filter query + set `tenant_id` saat create record
+4. **Superadmin** — Bisa akses semua data lintas tenant (skip tenant scope)
+
+### User Roles
+
+| Role         | Akses                                  |
+| ------------ | -------------------------------------- |
+| `superadmin` | Akses semua tenant, full control       |
+| `admin`      | Admin per tenant                       |
+| `operator`   | Operator per tenant                    |
+| `donor`      | Donator (default role)                 |
+
+### Contoh Request dengan Tenant
+
+```bash
+curl -X GET http://localhost:8000/api/campaigns \
+  -H "Authorization: Bearer {token}" \
+  -H "X-Tenant-ID: 1"
 ```
 
 ## Progress Setup
 
-### Hari 1 — Setup Foundation
+### Setup Foundation
 
-- Project Laravel 12 berjalan
-- Laravel Sanctum terpasang & dikonfigurasi (token-based, stateless)
-- Scramble (OpenAPI/Swagger) terpasang & bisa diakses di `/docs/api`
-- Migration `personal_access_tokens` berhasil
+- [x] Project Laravel 12 berjalan
+- [x] Laravel Sanctum terpasang & dikonfigurasi (token-based, stateless)
+- [x] Scramble (OpenAPI/Swagger) terpasang & bisa diakses di `/docs/api`
+- [x] Migration core selesai (16 tabel dengan prefix `pbxcf_`)
+- [x] Multi-tenant middleware aktif (`EnsureTenant` + `BelongsToTenant` trait)
+- [x] Struktur modular siap digunakan
 
 ---
 

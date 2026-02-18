@@ -1,0 +1,4 @@
+<?php
+
+// App\Http\Controllers\Api
+// Base controller & API controllers akan ditaruh di sini.
